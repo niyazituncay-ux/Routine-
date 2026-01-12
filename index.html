@@ -1,1 +1,266 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Routine – Gesundheit & Bücher</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1abc9c, #16a085);
+    color: #fff;
+    padding: 20px;
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+.container {
+    background: rgba(255,255,255,0.15);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    padding: 8px;
+    text-align: center;
+}
+
+input[type="text"], input[type="number"], textarea {
+    width: 100%;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+}
+
+textarea {
+    resize: vertical;
+}
+
+button {
+    background: #0e6655;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: #117864;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.checkbox-group label {
+    background: rgba(0,0,0,0.2);
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+.summary {
+    margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🧘 Gesundheits- & 📚 Bücherroutine</h1>
+
+<div id="pdfContent">
+
+<!-- =================== GESUNDHEIT =================== -->
+<div class="container">
+<h2>Gesundheitsroutine (Woche)</h2>
+
+<table id="healthTable">
+<thead>
+<tr>
+<th>Tag</th>
+<th>Supplemente</th>
+<th>Notizen</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<div class="summary">
+<h3>Wochenauswertung</h3>
+<ul id="healthSummary"></ul>
+</div>
+</div>
+
+<!-- =================== BÜCHER =================== -->
+<div class="container">
+<h2>Bücherroutine (Ziel: 30 Minuten)</h2>
+
+<table id="bookTable">
+<thead>
+<tr>
+<th>Buchtitel</th>
+<th>Minuten gelesen</th>
+<th>Fertig</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<button onclick="addBook()">➕ Buch hinzufügen</button>
+
+<div class="summary">
+<h3>Historie & Gesamtzeit</h3>
+<p id="bookSummary"></p>
+</div>
+</div>
+
+</div>
+
+<button onclick="exportPDF()">📄 PDF exportieren</button>
+
+<script>
+const supplements = [
+"Omega 3","Vitamin D3","K2","Multivitamin",
+"Magnesium","Olivenöl","Schwarzkümmelöl","Propolis"
+];
+
+const days = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag"];
+
+function getDate(offset){
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return d.toLocaleDateString("de-DE");
+}
+
+/* ================= GESUNDHEIT ================= */
+const healthBody = document.querySelector("#healthTable tbody");
+
+days.forEach((day,i)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+    <td>${day}<br>${getDate(i)}</td>
+    <td class="checkbox-group">
+        ${supplements.map(s=>`
+        <label>
+            <input type="checkbox" data-s="${s}" data-d="${day}">
+            ${s}
+        </label>`).join("")}
+    </td>
+    <td><textarea data-note="${day}"></textarea></td>
+    `;
+    healthBody.appendChild(tr);
+});
+
+/* ================= BÜCHER ================= */
+const bookBody = document.querySelector("#bookTable tbody");
+
+function addBook(){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+    <td><input type="text" class="title"></td>
+    <td><input type="number" class="minutes"></td>
+    <td><input type="checkbox" class="done"></td>
+    `;
+    bookBody.appendChild(tr);
+    saveData();
+}
+
+/* ================= SPEICHERN ================= */
+function saveData(){
+    const data = {
+        health: [...document.querySelectorAll("[data-s]")].map(c=>({
+            s:c.dataset.s, d:c.dataset.d, v:c.checked
+        })),
+        notes: [...document.querySelectorAll("[data-note]")].map(n=>({
+            d:n.dataset.note, v:n.value
+        })),
+        books: [...bookBody.children].map(r=>({
+            title:r.querySelector(".title").value,
+            min:r.querySelector(".minutes").value,
+            done:r.querySelector(".done").checked
+        }))
+    };
+    localStorage.setItem("routineData",JSON.stringify(data));
+    updateSummary();
+}
+
+function loadData(){
+    const d = JSON.parse(localStorage.getItem("routineData")||"{}");
+    if(d.health){
+        d.health.forEach(x=>{
+            const c = document.querySelector(`[data-s="${x.s}"][data-d="${x.d}"]`);
+            if(c) c.checked = x.v;
+        });
+    }
+    if(d.notes){
+        d.notes.forEach(x=>{
+            const n = document.querySelector(`[data-note="${x.d}"]`);
+            if(n) n.value = x.v;
+        });
+    }
+    if(d.books){
+        d.books.forEach(b=>{
+            addBook();
+            const r = bookBody.lastChild;
+            r.querySelector(".title").value=b.title;
+            r.querySelector(".minutes").value=b.min;
+            r.querySelector(".done").checked=b.done;
+        });
+    }
+    updateSummary();
+}
+
+/* ================= AUSWERTUNG ================= */
+function updateSummary(){
+    const summary = {};
+    document.querySelectorAll("[data-s]").forEach(c=>{
+        if(c.checked){
+            summary[c.dataset.s]=(summary[c.dataset.s]||0)+1;
+        }
+    });
+    const ul = document.getElementById("healthSummary");
+    ul.innerHTML="";
+    Object.keys(summary).forEach(k=>{
+        ul.innerHTML+=`<li>${k}: ${summary[k]}x</li>`;
+    });
+
+    let total=0;
+    document.querySelectorAll(".minutes").forEach(m=>{
+        total+=Number(m.value||0);
+    });
+    document.getElementById("bookSummary").innerText =
+        `Gesamt gelesene Minuten: ${total}`;
+}
+
+/* ================= EVENTS ================= */
+document.addEventListener("change",saveData);
+document.addEventListener("keyup",saveData);
+
+/* ================= PDF ================= */
+function exportPDF(){
+    html2pdf().from(document.getElementById("pdfContent"))
+    .set({filename:"Routine-Auswertung.pdf"})
+    .save();
+}
+
+loadData();
+</script>
+
+</body>
+</html>
