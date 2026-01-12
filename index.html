@@ -1,266 +1,871 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Routine – Gesundheit & Bücher</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Routine-Kalender – Gesundheit & Bücher</title>
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #1abc9c, #16a085);
-    color: #fff;
-    padding: 20px;
-}
+  <!-- PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-h1, h2 {
-    text-align: center;
-}
+  <style>
+    :root{
+      --bg1:#11c5b6;
+      --bg2:#0b7aa5;
+      --glass: rgba(255,255,255,.14);
+      --glass2: rgba(255,255,255,.10);
+      --stroke: rgba(255,255,255,.22);
+      --text: #f6ffff;
+      --muted: rgba(255,255,255,.82);
+      --shadow: 0 18px 50px rgba(0,0,0,.25);
+      --radius: 18px;
+      --radius2: 14px;
+      --ok: rgba(0,0,0,.18);
+      --chip: rgba(0,0,0,.16);
+    }
 
-.container {
-    background: rgba(255,255,255,0.15);
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 30px;
-}
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Helvetica Neue", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(255,255,255,.18), transparent 60%),
+        radial-gradient(1100px 680px at 85% 15%, rgba(255,255,255,.12), transparent 60%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
+    a{color:inherit}
+    .wrap{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px 14px 42px;
+    }
 
-th, td {
-    border-bottom: 1px solid rgba(255,255,255,0.3);
-    padding: 8px;
-    text-align: center;
-}
+    /* Sticky Header */
+    .header{
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      background: rgba(10, 40, 56, .35);
+      border-bottom: 1px solid var(--stroke);
+    }
 
-input[type="text"], input[type="number"], textarea {
-    width: 100%;
-    padding: 6px;
-    border-radius: 6px;
-    border: none;
-}
+    .header-inner{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 14px 14px 12px;
+      display:flex;
+      flex-direction: column;
+      gap: 12px;
+    }
 
-textarea {
-    resize: vertical;
-}
+    .top-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
 
-button {
-    background: #0e6655;
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 10px;
-}
+    .brand{
+      display:flex;
+      align-items:flex-end;
+      gap:10px;
+    }
+    .brand h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+    .brand .sub{
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
 
-button:hover {
-    background: #117864;
-}
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
 
-.checkbox-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-}
+    button{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.10);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform .08s ease, background .2s ease;
+      box-shadow: 0 10px 24px rgba(0,0,0,.12);
+      font-weight: 600;
+      letter-spacing: .15px;
+      white-space: nowrap;
+    }
+    button:hover{ background: rgba(255,255,255,.14); }
+    button:active{ transform: translateY(1px); }
 
-.checkbox-group label {
-    background: rgba(0,0,0,0.2);
-    padding: 6px 10px;
-    border-radius: 6px;
-}
+    .segmented{
+      display:flex;
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      overflow:hidden;
+      background: rgba(255,255,255,.08);
+    }
+    .segmented button{
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
+      padding: 10px 12px;
+      background: transparent;
+      opacity: .85;
+    }
+    .segmented button.active{
+      background: rgba(255,255,255,.16);
+      opacity: 1;
+    }
 
-.summary {
-    margin-top: 15px;
-}
-</style>
+    .stats{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 12px;
+    }
+    @media (max-width: 860px){
+      .stats{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--glass);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+
+    .card h2{
+      margin: 2px 0 10px;
+      font-size: 13px;
+      letter-spacing: .2px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: var(--chip);
+      border: 1px solid rgba(255,255,255,.18);
+      font-size: 12.5px;
+    }
+    .chip strong{
+      font-size: 13px;
+      letter-spacing: .2px;
+    }
+    .chip .k{
+      color: var(--muted);
+    }
+
+    .mini{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 520px){
+      .mini{ grid-template-columns: 1fr; }
+    }
+    .mini .mcard{
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.14);
+    }
+    .mini .mcard .label{
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .mini .mcard .val{
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing:.2px;
+    }
+
+    /* Main Layout */
+    .content{
+      padding-top: 16px;
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap: 14px;
+      align-items:start;
+    }
+    @media (max-width: 1020px){
+      .content{ grid-template-columns: 1fr; }
+    }
+
+    .panel{
+      background: var(--glass2);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .panel-head{
+      padding: 12px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.18);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: rgba(0,0,0,.10);
+    }
+    .panel-title{
+      font-weight: 800;
+      letter-spacing:.2px;
+    }
+    .panel-sub{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .panel-body{
+      padding: 12px;
+    }
+
+    /* Calendar list */
+    .day{
+      background: rgba(0,0,0,.14);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: var(--radius2);
+      padding: 12px;
+      margin-bottom: 10px;
+      display:grid;
+      grid-template-columns: 190px 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 720px){
+      .day{ grid-template-columns: 1fr; }
+    }
+
+    .datebox{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      min-height: 96px;
+    }
+    .datebox .dow{
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: .2px;
+    }
+    .datebox .d{
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .datebox .week{
+      margin-top:auto;
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+    }
+
+    .supp-grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 980px){
+      .supp-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    }
+    @media (max-width: 520px){
+      .supp-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+
+    .pill{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      cursor:pointer;
+      user-select:none;
+      transition: background .15s ease, transform .08s ease;
+      font-size: 12.5px;
+    }
+    .pill:hover{ background: rgba(255,255,255,.12); }
+    .pill:active{ transform: translateY(1px); }
+    .pill input{ transform: scale(1.05); }
+
+    textarea, input[type="text"], input[type="number"]{
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 10px;
+      outline:none;
+    }
+    textarea::placeholder, input::placeholder{ color: rgba(255,255,255,.65); }
+    textarea{ min-height: 82px; resize: vertical; }
+
+    /* Books */
+    .book-row{
+      display:grid;
+      grid-template-columns: 1fr 120px 86px;
+      gap: 10px;
+      align-items:center;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.14);
+      border: 1px solid rgba(255,255,255,.16);
+    }
+    @media (max-width: 520px){
+      .book-row{ grid-template-columns: 1fr; }
+    }
+
+    .check{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+    }
+
+    .side{
+      position: sticky;
+      top: 190px;
+    }
+    @media (max-width: 1020px){
+      .side{ position: static; }
+    }
+
+    .hr{ height:1px; background: rgba(255,255,255,.16); margin: 10px 0; }
+
+    .small{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* PDF: give white background */
+    .pdf-mode{
+      background: #ffffff !important;
+      color: #0b2d33 !important;
+    }
+    .pdf-mode .header{ position: static !important; background: transparent !important; color: #0b2d33 !important; }
+    .pdf-mode .card, .pdf-mode .panel, .pdf-mode .day, .pdf-mode .book-row, .pdf-mode textarea, .pdf-mode input{
+      box-shadow: none !important;
+      background: #f4fbfb !important;
+      border-color: #cfe7e7 !important;
+      color: #0b2d33 !important;
+    }
+    .pdf-mode .chip, .pdf-mode .pill, .pdf-mode .check{
+      background: #eaf7f7 !important;
+      border-color: #cfe7e7 !important;
+      color: #0b2d33 !important;
+    }
+    .pdf-mode .muted, .pdf-mode .panel-sub, .pdf-mode .small, .pdf-mode .chip .k, .pdf-mode .datebox .d{
+      color: #335b5f !important;
+    }
+  </style>
 </head>
 
 <body>
+  <div class="header">
+    <div class="header-inner">
+      <div class="top-row">
+        <div class="brand">
+          <h1>Routine-Kalender</h1>
+          <div class="sub">Gesundheit & Bücher • alles bleibt gespeichert</div>
+        </div>
 
-<h1>🧘 Gesundheits- & 📚 Bücherroutine</h1>
+        <div class="actions">
+          <div class="segmented" aria-label="Ansicht">
+            <button id="tabHealth" class="active" onclick="setTab('health')">🧘 Gesundheit</button>
+            <button id="tabBooks" onclick="setTab('books')">📚 Bücher</button>
+          </div>
+          <button onclick="addMoreDays()">＋ 7 Tage</button>
+          <button onclick="exportPDF()">📄 PDF</button>
+          <button onclick="resetAll()" title="Setzt nur lokale Daten zurück">Reset</button>
+        </div>
+      </div>
 
-<div id="pdfContent">
+      <div class="stats">
+        <div class="card">
+          <h2>Auswertung Gesundheit</h2>
+          <div id="healthChips" class="chips"></div>
+        </div>
 
-<!-- =================== GESUNDHEIT =================== -->
-<div class="container">
-<h2>Gesundheitsroutine (Woche)</h2>
+        <div class="card">
+          <h2>Auswertung Bücher</h2>
+          <div class="mini">
+            <div class="mcard">
+              <div class="label">Gesamt Minuten</div>
+              <div class="val" id="sumMinutes">0</div>
+            </div>
+            <div class="mcard">
+              <div class="label">Bücher fertig</div>
+              <div class="val" id="sumDone">0</div>
+            </div>
+            <div class="mcard">
+              <div class="label">30-Min-Tage</div>
+              <div class="val" id="sumGoalDays">0</div>
+            </div>
+          </div>
+          <div class="small" style="margin-top:10px">
+            Tipp: „30-Min-Tage“ zählt Tage, an denen du <b>≥ 30 Minuten</b> eingetragen hast.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<table id="healthTable">
-<thead>
-<tr>
-<th>Tag</th>
-<th>Supplemente</th>
-<th>Notizen</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
+  <div class="wrap" id="appRoot">
+    <div class="content">
+      <!-- MAIN -->
+      <div>
+        <!-- HEALTH PANEL -->
+        <div id="healthPanel" class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">🧘 Gesundheitsroutine – Endlos-Kalender</div>
+              <div class="panel-sub">Checkboxen pro Tag + Notizen. Oben siehst du die Auswertung.</div>
+            </div>
+          </div>
+          <div class="panel-body" id="healthList"></div>
+        </div>
 
-<div class="summary">
-<h3>Wochenauswertung</h3>
-<ul id="healthSummary"></ul>
-</div>
-</div>
+        <!-- BOOKS PANEL -->
+        <div id="booksPanel" class="panel" style="display:none;">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">📚 Bücherroutine</div>
+              <div class="panel-sub">Titel + Minuten + fertig. Alles bleibt gespeichert.</div>
+            </div>
+            <button onclick="addBookRow()">➕ Buch</button>
+          </div>
 
-<!-- =================== BÜCHER =================== -->
-<div class="container">
-<h2>Bücherroutine (Ziel: 30 Minuten)</h2>
+          <div class="panel-body">
+            <div id="bookRows"></div>
+            <div class="hr"></div>
+            <div class="small" id="bookHistory"></div>
+          </div>
+        </div>
+      </div>
 
-<table id="bookTable">
-<thead>
-<tr>
-<th>Buchtitel</th>
-<th>Minuten gelesen</th>
-<th>Fertig</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-
-<button onclick="addBook()">➕ Buch hinzufügen</button>
-
-<div class="summary">
-<h3>Historie & Gesamtzeit</h3>
-<p id="bookSummary"></p>
-</div>
-</div>
-
-</div>
-
-<button onclick="exportPDF()">📄 PDF exportieren</button>
+      <!-- SIDE -->
+      <div class="side">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">🧾 Kurzinfo</div>
+              <div class="panel-sub">Teilen / PDF / Speicherung</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="small">
+              ✅ Alles wird lokal gespeichert (Browser / Gerät).<br><br>
+              📄 PDF exportiert <b>Auswertung + Inhalte</b>.<br><br>
+              🔗 Wenn du den Link per GitHub Pages nutzt, kann jeder die Seite öffnen – aber <b>die Eingaben sind pro Gerät</b> gespeichert (nicht global), weil ohne Server.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <script>
-const supplements = [
-"Omega 3","Vitamin D3","K2","Multivitamin",
-"Magnesium","Olivenöl","Schwarzkümmelöl","Propolis"
+/* =========================
+   DATA MODEL (LocalStorage)
+========================= */
+const LS_KEY = "routine_calendar_v2";
+
+const SUPPS = [
+  "Omega 3","Vitamin D3","K2","Multivitamin",
+  "Magnesium","Olivenöl","Schwarzkümmelöl","Propolis"
 ];
 
-const days = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag"];
-
-function getDate(offset){
-    const d = new Date();
-    d.setDate(d.getDate() + offset);
-    return d.toLocaleDateString("de-DE");
+function isoDate(d){
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth()+1).padStart(2,"0");
+  const da = String(d.getDate()).padStart(2,"0");
+  return `${yr}-${mo}-${da}`;
+}
+function deDate(iso){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(y, m-1, d);
+  return dt.toLocaleDateString("de-DE");
+}
+function dowName(iso){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(y, m-1, d);
+  return dt.toLocaleDateString("de-DE", { weekday: "long" });
+}
+function weekNumberISO(d){
+  // ISO week number
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1)/7);
 }
 
-/* ================= GESUNDHEIT ================= */
-const healthBody = document.querySelector("#healthTable tbody");
-
-days.forEach((day,i)=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-    <td>${day}<br>${getDate(i)}</td>
-    <td class="checkbox-group">
-        ${supplements.map(s=>`
-        <label>
-            <input type="checkbox" data-s="${s}" data-d="${day}">
-            ${s}
-        </label>`).join("")}
-    </td>
-    <td><textarea data-note="${day}"></textarea></td>
-    `;
-    healthBody.appendChild(tr);
-});
-
-/* ================= BÜCHER ================= */
-const bookBody = document.querySelector("#bookTable tbody");
-
-function addBook(){
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-    <td><input type="text" class="title"></td>
-    <td><input type="number" class="minutes"></td>
-    <td><input type="checkbox" class="done"></td>
-    `;
-    bookBody.appendChild(tr);
-    saveData();
-}
-
-/* ================= SPEICHERN ================= */
-function saveData(){
-    const data = {
-        health: [...document.querySelectorAll("[data-s]")].map(c=>({
-            s:c.dataset.s, d:c.dataset.d, v:c.checked
-        })),
-        notes: [...document.querySelectorAll("[data-note]")].map(n=>({
-            d:n.dataset.note, v:n.value
-        })),
-        books: [...bookBody.children].map(r=>({
-            title:r.querySelector(".title").value,
-            min:r.querySelector(".minutes").value,
-            done:r.querySelector(".done").checked
-        }))
+function load(){
+  const raw = localStorage.getItem(LS_KEY);
+  if(!raw){
+    const init = {
+      days: [], // [{dateISO, notes, supps:{name:true/false}}]
+      books: [], // [{id,title,minutes,done,finishedAtISO?}]
+      lastBuiltTo: null
     };
-    localStorage.setItem("routineData",JSON.stringify(data));
-    updateSummary();
+    localStorage.setItem(LS_KEY, JSON.stringify(init));
+  }
+  return JSON.parse(localStorage.getItem(LS_KEY));
+}
+function save(data){
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
 }
 
-function loadData(){
-    const d = JSON.parse(localStorage.getItem("routineData")||"{}");
-    if(d.health){
-        d.health.forEach(x=>{
-            const c = document.querySelector(`[data-s="${x.s}"][data-d="${x.d}"]`);
-            if(c) c.checked = x.v;
-        });
+/* =========================
+   BUILD/EXTEND CALENDAR
+========================= */
+function ensureDays(countMore = 0){
+  const data = load();
+  const today = new Date();
+
+  // Determine build start/end
+  let startISO;
+  if(data.days.length === 0){
+    // start from today
+    startISO = isoDate(today);
+  } else {
+    startISO = data.days[0].dateISO;
+  }
+
+  // target end: if lastBuiltTo exists, extend from there; else from last day in list
+  let lastISO = data.lastBuiltTo || (data.days.length ? data.days[data.days.length-1].dateISO : startISO);
+  let last = new Date(lastISO + "T00:00:00");
+
+  // Base ensure: at least 21 days available initially
+  const targetExtra = (data.days.length === 0 ? 21 : 0) + countMore;
+  const targetDays = data.days.length + targetExtra;
+
+  // If need to fill up to targetDays, append sequential days
+  while(data.days.length < targetDays){
+    const nextISO = isoDate(last);
+    if(!data.days.some(x => x.dateISO === nextISO)){
+      const suppObj = {};
+      SUPPS.forEach(s => suppObj[s] = false);
+      data.days.push({ dateISO: nextISO, notes: "", supps: suppObj });
     }
-    if(d.notes){
-        d.notes.forEach(x=>{
-            const n = document.querySelector(`[data-note="${x.d}"]`);
-            if(n) n.value = x.v;
-        });
-    }
-    if(d.books){
-        d.books.forEach(b=>{
-            addBook();
-            const r = bookBody.lastChild;
-            r.querySelector(".title").value=b.title;
-            r.querySelector(".minutes").value=b.min;
-            r.querySelector(".done").checked=b.done;
-        });
-    }
-    updateSummary();
+    last.setDate(last.getDate() + 1);
+  }
+
+  // update lastBuiltTo
+  const finalLast = new Date(data.days[data.days.length-1].dateISO + "T00:00:00");
+  data.lastBuiltTo = isoDate(finalLast);
+
+  save(data);
 }
 
-/* ================= AUSWERTUNG ================= */
-function updateSummary(){
-    const summary = {};
-    document.querySelectorAll("[data-s]").forEach(c=>{
-        if(c.checked){
-            summary[c.dataset.s]=(summary[c.dataset.s]||0)+1;
-        }
-    });
-    const ul = document.getElementById("healthSummary");
-    ul.innerHTML="";
-    Object.keys(summary).forEach(k=>{
-        ul.innerHTML+=`<li>${k}: ${summary[k]}x</li>`;
-    });
-
-    let total=0;
-    document.querySelectorAll(".minutes").forEach(m=>{
-        total+=Number(m.value||0);
-    });
-    document.getElementById("bookSummary").innerText =
-        `Gesamt gelesene Minuten: ${total}`;
+/* =========================
+   UI RENDER
+========================= */
+function setTab(tab){
+  document.getElementById("healthPanel").style.display = tab === "health" ? "" : "none";
+  document.getElementById("booksPanel").style.display = tab === "books" ? "" : "none";
+  document.getElementById("tabHealth").classList.toggle("active", tab === "health");
+  document.getElementById("tabBooks").classList.toggle("active", tab === "books");
 }
 
-/* ================= EVENTS ================= */
-document.addEventListener("change",saveData);
-document.addEventListener("keyup",saveData);
+function renderHealth(){
+  const data = load();
+  const list = document.getElementById("healthList");
+  list.innerHTML = "";
 
-/* ================= PDF ================= */
+  data.days.forEach(day => {
+    const dObj = new Date(day.dateISO + "T00:00:00");
+    const wn = weekNumberISO(dObj);
+
+    const el = document.createElement("div");
+    el.className = "day";
+    el.innerHTML = `
+      <div class="datebox">
+        <div class="dow">${capitalize(dowName(day.dateISO))}</div>
+        <div class="d">${deDate(day.dateISO)}</div>
+        <div class="week">KW ${wn}</div>
+      </div>
+      <div>
+        <div class="supp-grid">
+          ${SUPPS.map(s => `
+            <label class="pill">
+              <input type="checkbox" data-date="${day.dateISO}" data-supp="${escapeHtml(s)}" ${day.supps[s] ? "checked":""}/>
+              <span>${s}</span>
+            </label>
+          `).join("")}
+        </div>
+        <textarea placeholder="Notizen / Freitext…" data-note-date="${day.dateISO}">${escapeHtml(day.notes || "")}</textarea>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+
+  // Bind events
+  list.querySelectorAll('input[type="checkbox"][data-date]').forEach(cb=>{
+    cb.addEventListener("change", (e)=>{
+      const date = e.target.dataset.date;
+      const supp = unescapeHtml(e.target.dataset.supp);
+      const data = load();
+      const day = data.days.find(x=>x.dateISO===date);
+      if(day){
+        day.supps[supp] = e.target.checked;
+        save(data);
+        renderStats();
+      }
+    });
+  });
+
+  list.querySelectorAll('textarea[data-note-date]').forEach(ta=>{
+    ta.addEventListener("input", (e)=>{
+      const date = e.target.dataset.noteDate;
+      const data = load();
+      const day = data.days.find(x=>x.dateISO===date);
+      if(day){
+        day.notes = e.target.value;
+        save(data);
+      }
+    });
+  });
+}
+
+function renderBooks(){
+  const data = load();
+  const container = document.getElementById("bookRows");
+  container.innerHTML = "";
+
+  data.books.forEach(book => {
+    const row = document.createElement("div");
+    row.className = "book-row";
+    row.innerHTML = `
+      <input type="text" placeholder="Buchtitel…" value="${escapeHtml(book.title||"")}" data-bid="${book.id}" data-field="title" />
+      <input type="number" min="0" placeholder="Minuten" value="${escapeHtml(String(book.minutes ?? ""))}" data-bid="${book.id}" data-field="minutes" />
+      <label class="check">
+        <input type="checkbox" ${book.done ? "checked":""} data-bid="${book.id}" data-field="done" />
+        <span>Fertig</span>
+      </label>
+    `;
+    container.appendChild(row);
+  });
+
+  // Bind events
+  container.querySelectorAll('input[data-bid]').forEach(inp=>{
+    inp.addEventListener("input", onBookChange);
+    inp.addEventListener("change", onBookChange);
+  });
+
+  renderBookHistory();
+}
+
+function onBookChange(e){
+  const id = e.target.dataset.bid;
+  const field = e.target.dataset.field;
+  const data = load();
+  const b = data.books.find(x=>x.id===id);
+  if(!b) return;
+
+  if(field === "title") b.title = e.target.value;
+  if(field === "minutes") b.minutes = Number(e.target.value || 0);
+  if(field === "done"){
+    const was = !!b.done;
+    b.done = e.target.checked;
+    if(!was && b.done){
+      b.finishedAtISO = b.finishedAtISO || isoDate(new Date());
+    }
+    if(was && !b.done){
+      // keep finishedAtISO (history), but you can clear if you want
+    }
+  }
+  save(data);
+  renderStats();
+  renderBookHistory();
+}
+
+function renderBookHistory(){
+  const data = load();
+  const doneBooks = data.books.filter(b=>b.done && (b.title||"").trim().length>0);
+  const history = document.getElementById("bookHistory");
+  if(doneBooks.length === 0){
+    history.innerHTML = "Noch keine fertigen Bücher. Sobald du ein Buch als <b>Fertig</b> markierst, erscheint es hier in der Historie.";
+    return;
+  }
+  const lines = doneBooks
+    .sort((a,b)=> (a.finishedAtISO||"").localeCompare(b.finishedAtISO||""))
+    .map(b=>{
+      const when = b.finishedAtISO ? ` • ${deDate(b.finishedAtISO)}` : "";
+      return `• <b>${escapeHtml(b.title)}</b> — ${Number(b.minutes||0)} Min${when}`;
+    });
+  history.innerHTML = `<b>Historie (fertige Bücher):</b><br>` + lines.join("<br>");
+}
+
+/* =========================
+   STATS (Sticky Header)
+========================= */
+function renderStats(){
+  const data = load();
+
+  // Health: count how many days each supp checked (true)
+  const counts = {};
+  SUPPS.forEach(s => counts[s]=0);
+  data.days.forEach(day=>{
+    SUPPS.forEach(s=>{
+      if(day.supps?.[s]) counts[s] += 1;
+    });
+  });
+
+  const hc = document.getElementById("healthChips");
+  hc.innerHTML = SUPPS.map(s=>{
+    return `<div class="chip"><span class="k">${escapeHtml(s)}</span><strong>${counts[s]}</strong></div>`;
+  }).join("");
+
+  // Books
+  let sumMinutes = 0;
+  let sumDone = 0;
+  data.books.forEach(b=>{
+    sumMinutes += Number(b.minutes||0);
+    if(b.done) sumDone += 1;
+  });
+
+  // Goal days: count days where notes include reading minutes? We’ll implement a simple “Reading Minutes by Day” via books:
+  // We'll interpret "30-Min-Tage" as: number of books entries with >=30 minutes (simple & useful).
+  // If you want daily reading tracking later, we can add a per-day reading log.
+  const goalDays = data.books.filter(b => Number(b.minutes||0) >= 30).length;
+
+  document.getElementById("sumMinutes").textContent = String(sumMinutes);
+  document.getElementById("sumDone").textContent = String(sumDone);
+  document.getElementById("sumGoalDays").textContent = String(goalDays);
+}
+
+/* =========================
+   ACTIONS
+========================= */
+function addMoreDays(){
+  ensureDays(7);
+  renderHealth();
+  renderStats();
+}
+
+function addBookRow(){
+  const data = load();
+  data.books.unshift({
+    id: cryptoRandomId(),
+    title: "",
+    minutes: 0,
+    done: false
+  });
+  save(data);
+  renderBooks();
+  renderStats();
+}
+
+function resetAll(){
+  if(!confirm("Willst du wirklich alle lokal gespeicherten Daten löschen?")) return;
+  localStorage.removeItem(LS_KEY);
+  boot();
+}
+
 function exportPDF(){
-    html2pdf().from(document.getElementById("pdfContent"))
-    .set({filename:"Routine-Auswertung.pdf"})
-    .save();
+  // Switch to PDF-friendly mode
+  document.body.classList.add("pdf-mode");
+
+  const opt = {
+    margin: 0.3,
+    filename: "Routine-Kalender.pdf",
+    image: { type: "jpeg", quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
+  };
+
+  // Export appRoot incl. header content? We'll export full page content excluding browser UI
+  html2pdf().set(opt).from(document.documentElement).save().then(()=>{
+    document.body.classList.remove("pdf-mode");
+  }).catch(()=>{
+    document.body.classList.remove("pdf-mode");
+  });
 }
 
-loadData();
-</script>
+/* =========================
+   HELPERS
+========================= */
+function cryptoRandomId(){
+  // Simple unique id
+  const a = new Uint32Array(3);
+  crypto.getRandomValues(a);
+  return Array.from(a).map(x=>x.toString(16)).join("");
+}
+function capitalize(s){
+  if(!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function escapeHtml(str){
+  return (str ?? "").toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function unescapeHtml(str){
+  // Our supp names don’t need full HTML unescape; just return raw
+  return str;
+}
 
+/* =========================
+   BOOT
+========================= */
+function boot(){
+  ensureDays(0);
+  const data = load();
+  if(!data.books || data.books.length===0){
+    data.books = [{
+      id: cryptoRandomId(),
+      title: "",
+      minutes: 0,
+      done: false
+    }];
+    save(data);
+  }
+  renderHealth();
+  renderBooks();
+  renderStats();
+}
+boot();
+</script>
 </body>
 </html>
