@@ -2,16 +2,16 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jahres-Routine – Gesundheit & Bücher</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Routine – Ultra Mobile</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
 :root{
-  --bg1:#18c1b6;
-  --bg2:#0b6f95;
-  --glass:rgba(255,255,255,.14);
+  --bg1:#18c7bd;
+  --bg2:#0a6e8a;
+  --card:rgba(255,255,255,.15);
   --border:rgba(255,255,255,.25);
   --text:#f7ffff;
   --muted:rgba(255,255,255,.8);
@@ -27,49 +27,48 @@ body{
 }
 
 header{
-  padding:18px;
+  padding:14px;
   background:rgba(0,0,0,.25);
   border-bottom:1px solid var(--border);
 }
 
-h1{margin:0;font-size:22px}
-h2{margin:16px 0 8px}
+h1{margin:0;font-size:18px}
+h2{margin:12px 0 8px;font-size:16px}
 
 section{
-  max-width:1200px;
-  margin:auto;
-  padding:18px;
+  padding:12px;
 }
 
 .card{
-  background:var(--glass);
+  background:var(--card);
   border:1px solid var(--border);
-  border-radius:16px;
-  padding:14px;
-  margin-bottom:16px;
-}
-
-.calendar-day{
-  display:grid;
-  grid-template-columns:200px 1fr;
-  gap:14px;
+  border-radius:14px;
+  padding:12px;
   margin-bottom:12px;
 }
 
-@media(max-width:700px){
-  .calendar-day{grid-template-columns:1fr}
+.stat{
+  font-size:14px;
+  margin-bottom:6px;
 }
 
-.date-box{
+.day{
   background:rgba(0,0,0,.2);
   border-radius:14px;
   padding:12px;
+  margin-bottom:12px;
+}
+
+.date{
+  font-weight:700;
+  margin-bottom:6px;
 }
 
 .supps{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  grid-template-columns:1fr 1fr;
   gap:8px;
+  margin-bottom:8px;
 }
 
 label{
@@ -77,40 +76,38 @@ label{
   gap:6px;
   align-items:center;
   background:rgba(255,255,255,.1);
-  padding:6px 8px;
+  padding:8px;
   border-radius:10px;
+  font-size:14px;
 }
 
 textarea,input{
   width:100%;
   border:none;
   border-radius:10px;
-  padding:8px;
+  padding:10px;
   background:rgba(0,0,0,.25);
   color:white;
+  font-size:14px;
 }
 
-.book-row{
-  display:grid;
-  grid-template-columns:1fr 120px 80px;
-  gap:10px;
-  margin-bottom:8px;
-}
+textarea{min-height:70px}
 
-.stats-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:12px;
+.book{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-bottom:10px;
 }
-
-.small{font-size:13px;color:var(--muted)}
 
 button{
+  width:100%;
   background:#0b5f75;
   color:white;
   border:none;
-  padding:10px 14px;
+  padding:12px;
   border-radius:12px;
+  font-size:15px;
   cursor:pointer;
 }
 </style>
@@ -119,30 +116,29 @@ button{
 <body>
 
 <header>
-  <h1>📅 Jahres-Routine  – Gesundheit & Bücher</h1>
-  <div class="small">Scroll bis Jahresende · automatische Auswertung</div>
+  <h1>📅 Routine – Ultra Mobile</h1>
+  <div style="font-size:13px;color:var(--muted)">
+    Stabil · Einspaltig · Touch-optimiert
+  </div>
 </header>
 
 <section id="pdfArea">
 
-<!-- ================= AUSWERTUNG ================= -->
 <div class="card">
-  <h2>📊 Auswertungen</h2>
-  <div class="stats-grid" id="stats"></div>
+  <h2>📊 Auswertung</h2>
+  <div id="stats"></div>
 </div>
 
-<!-- ================= KALENDER ================= -->
 <div class="card">
-  <h2>🧘 Gesundheits-Kalender</h2>
+  <h2>🧘 Gesundheit</h2>
   <div id="calendar"></div>
 </div>
 
-<!-- ================= BÜCHER ================= -->
 <div class="card">
-  <h2>📚 Bücherroutine</h2>
+  <h2>📚 Bücher</h2>
   <div id="books"></div>
-  <button onclick="addBook()">➕ Buch hinzufügen</button>
-  <div class="small" id="bookHistory"></div>
+  <button onclick="addBook()">➕ Buch</button>
+  <div id="history" style="margin-top:10px;font-size:13px"></div>
 </div>
 
 </section>
@@ -153,12 +149,12 @@ button{
 
 <script>
 const SUPPS=["Omega 3","Vitamin D3","K2","Multivitamin","Magnesium","Olivenöl","Schwarzkümmelöl","Propolis"];
-const LS="yearRoutine";
+const LS="ultraRoutine";
 
 function load(){return JSON.parse(localStorage.getItem(LS)||"{}")}
 function save(d){localStorage.setItem(LS,JSON.stringify(d))}
 
-function buildYear(){
+function init(){
   const d=load();
   if(!d.days){
     d.days=[];
@@ -174,123 +170,106 @@ function buildYear(){
     d.books=[];
     save(d);
   }
-  return d;
+  render();
 }
 
 function render(){
-  const d=buildYear();
-  const cal=document.getElementById("calendar");
-  cal.innerHTML="";
+  const d=load();
+  renderStats(d);
+  renderCalendar(d);
+  renderBooks(d);
+}
+
+function renderCalendar(d){
+  const c=document.getElementById("calendar");
+  c.innerHTML="";
   d.days.forEach(day=>{
     const dt=new Date(day.date);
     const div=document.createElement("div");
-    div.className="calendar-day";
+    div.className="day";
     div.innerHTML=`
-      <div class="date-box">
-        <b>${dt.toLocaleDateString("de-DE",{weekday:"long"})}</b><br>
-        ${dt.toLocaleDateString()}<br>
-        KW ${getKW(dt)} · ${dt.getFullYear()}
+      <div class="date">
+        ${dt.toLocaleDateString("de-DE",{weekday:"long"})},
+        ${dt.toLocaleDateString()} (${dt.getFullYear()})
       </div>
-      <div>
-        <div class="supps">
-          ${SUPPS.map(s=>`
-            <label>
-              <input type="checkbox" ${day.supps[s]?"checked":""}
-                onchange="toggleSupp('${day.date}','${s}',this.checked)">
-              ${s}
-            </label>`).join("")}
-        </div>
-        <textarea placeholder="Notizen" oninput="saveNote('${day.date}',this.value)">${day.note}</textarea>
-      </div>`;
-    cal.appendChild(div);
+      <div class="supps">
+        ${SUPPS.map(s=>`
+          <label>
+            <input type="checkbox" ${day.supps[s]?"checked":""}
+              onchange="toggle('${day.date}','${s}',this.checked)">
+            ${s}
+          </label>`).join("")}
+      </div>
+      <textarea placeholder="Notizen"
+        oninput="note('${day.date}',this.value)">${day.note}</textarea>
+    `;
+    c.appendChild(div);
   });
-  renderBooks();
-  renderStats();
 }
 
-function toggleSupp(date,s,val){
+function renderStats(d){
+  const s=document.getElementById("stats");
+  s.innerHTML="";
+  SUPPS.forEach(x=>{
+    const total=d.days.filter(dy=>dy.supps[x]).length;
+    s.innerHTML+=`
+      <div class="stat">
+        ${x}: Ø Woche ${(total/52).toFixed(1)} · Ø Monat ${(total/12).toFixed(1)} · Jahr ${total}
+      </div>`;
+  });
+}
+
+function toggle(date,s,val){
   const d=load();
   d.days.find(x=>x.date===date).supps[s]=val;
-  save(d);renderStats();
+  save(d);renderStats(d);
 }
-function saveNote(date,val){
+function note(date,val){
   const d=load();
   d.days.find(x=>x.date===date).note=val;
   save(d);
 }
 
-function getKW(d){
-  d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
-  d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));
-  const y=new Date(Date.UTC(d.getUTCFullYear(),0,1));
-  return Math.ceil(((d-y)/86400000+1)/7);
-}
-
-function renderStats(){
-  const d=load();
-  const stats=document.getElementById("stats");
-  stats.innerHTML="";
-  const weeks=52, months=12;
-
-  SUPPS.forEach(s=>{
-    const total=d.days.filter(x=>x.supps[s]).length;
-    stats.innerHTML+=`
-      <div class="card">
-        <b>${s}</b><br>
-        Jahr: ${total}<br>
-        Ø/Woche: ${(total/weeks).toFixed(2)}<br>
-        Ø/Monat: ${(total/months).toFixed(2)}
-      </div>`;
-  });
-
-  const totalMin=d.books.reduce((a,b)=>a+(b.min||0),0);
-  stats.innerHTML+=`
-    <div class="card">
-      <b>📚 Lesen</b><br>
-      Minuten/Jahr: ${totalMin}<br>
-      Ø/Woche: ${(totalMin/weeks).toFixed(1)}<br>
-      Ø/Monat: ${(totalMin/months).toFixed(1)}
-    </div>`;
-}
-
 function addBook(){
   const d=load();
-  d.books.push({title:"",min:0,done:false,finished:null});
-  save(d);renderBooks();renderStats();
+  d.books.push({title:"",min:0,done:false});
+  save(d);renderBooks(d);
 }
 
-function renderBooks(){
-  const d=load();
+function renderBooks(d){
   const b=document.getElementById("books");
   b.innerHTML="";
   d.books.forEach((bk,i)=>{
     b.innerHTML+=`
-      <div class="book-row">
-        <input value="${bk.title}" placeholder="Titel" oninput="editBook(${i},'title',this.value)">
-        <input type="number" value="${bk.min}" oninput="editBook(${i},'min',this.value)">
-        <input type="checkbox" ${bk.done?"checked":""} onchange="finishBook(${i},this.checked)">
+      <div class="book">
+        <input placeholder="Buchtitel" value="${bk.title}"
+          oninput="edit(${i},'title',this.value)">
+        <input type="number" placeholder="Minuten" value="${bk.min}"
+          oninput="edit(${i},'min',this.value)">
+        <label>
+          <input type="checkbox" ${bk.done?"checked":""}
+            onchange="done(${i},this.checked)"> Fertig
+        </label>
       </div>`;
   });
-  document.getElementById("bookHistory").innerHTML=
+  document.getElementById("history").innerHTML=
     "<b>Historie:</b><br>"+d.books.filter(x=>x.done)
     .map(x=>`• ${x.title} (${x.min} Min)`).join("<br>");
 }
 
-function editBook(i,f,v){
-  const d=load();d.books[i][f]=f==="min"?Number(v):v;save(d);renderStats();
+function edit(i,f,v){
+  const d=load();d.books[i][f]=f==="min"?Number(v):v;save(d);renderStats(d);
 }
-function finishBook(i,v){
-  const d=load();d.books[i].done=v;
-  if(v)d.books[i].finished=new Date().toISOString().slice(0,10);
-  save(d);renderBooks();renderStats();
+function done(i,v){
+  const d=load();d.books[i].done=v;save(d);renderBooks(d);renderStats(d);
 }
 
 function exportPDF(){
   html2pdf().from(document.getElementById("pdfArea"))
-  .set({filename:"Jahres-Routine.pdf"}).save();
+    .set({filename:"Routine-Mobile.pdf"}).save();
 }
 
-render();
+init();
 </script>
 
 </body>
