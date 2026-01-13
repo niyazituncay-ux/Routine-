@@ -1,285 +1,684 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Routine – Gesundheit & Bücher</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Routine – Gesundheit & Bücher (Jahreskalender)</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- PDF Export (optional; Seite funktioniert auch wenn CDN blockiert ist) -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-<style>
-:root{
-  --bg1:#19c3b3;
-  --bg2:#0b6a8a;
-  --card:rgba(255,255,255,.14);
-  --border:rgba(255,255,255,.25);
-  --text:#f7ffff;
-  --muted:rgba(255,255,255,.8);
-}
+  <style>
+    :root{
+      --bg1:#19c7bd;
+      --bg2:#0b6a8a;
+      --card:rgba(255,255,255,.14);
+      --border:rgba(255,255,255,.22);
+      --text:#f7ffff;
+      --muted:rgba(255,255,255,.82);
+      --dark:rgba(0,0,0,.22);
+      --chip:rgba(0,0,0,.18);
+      --ok:rgba(255,255,255,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      color:var(--text);
+    }
+    header{
+      padding:14px 14px 10px;
+      background:rgba(0,0,0,.22);
+      border-bottom:1px solid var(--border);
+    }
+    h1{margin:0;font-size:18px}
+    .sub{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.25}
+    section{padding:12px; max-width: 980px; margin: 0 auto;}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      margin-bottom:12px;
+    }
+    h2{margin:0 0 10px;font-size:16px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    button{
+      width:100%;
+      background:#0b5f75;
+      color:white;
+      border:none;
+      padding:12px;
+      border-radius:12px;
+      font-size:15px;
+      cursor:pointer;
+    }
+    .btnRow{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    @media (max-width:420px){ .btnRow{grid-template-columns:1fr} }
 
-*{box-sizing:border-box}
+    /* Tabs */
+    .tabs{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px}
+    .tab{
+      width:100%;
+      padding:10px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.10);
+      color:var(--text);
+      font-weight:700;
+      cursor:pointer;
+    }
+    .tab.active{background:rgba(255,255,255,.18)}
+    .hidden{display:none !important}
 
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  background:linear-gradient(135deg,var(--bg1),var(--bg2));
-  color:var(--text);
-}
+    /* Stats */
+    .statsGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .statLine{
+      background: var(--chip);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .statLine b{font-size:14px}
+    .muted{color:var(--muted)}
+    .miniGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 10px;
+    }
+    @media (max-width:420px){ .miniGrid{grid-template-columns:1fr} }
 
-header{
-  padding:14px;
-  background:rgba(0,0,0,.25);
-  border-bottom:1px solid var(--border);
-}
+    /* Calendar (Accordion Months) */
+    .month{
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(0,0,0,.14);
+      margin-bottom:10px;
+    }
+    .monthHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px;
+      cursor:pointer;
+      user-select:none;
+      background: rgba(255,255,255,.06);
+    }
+    .monthHead b{font-size:15px}
+    .monthHead .hint{font-size:12.5px;color:var(--muted)}
+    .monthBody{padding:12px}
+    .day{
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .dateLine{font-weight:800; margin-bottom:8px; font-size:14px}
+    .supps{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+      margin-bottom: 8px;
+    }
+    .pill{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      padding:10px;
+      border-radius:12px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+      font-size:14px;
+    }
+    textarea,input{
+      width:100%;
+      border:none;
+      border-radius:12px;
+      padding:10px;
+      background:rgba(0,0,0,.26);
+      color:white;
+      font-size:14px;
+      outline:none;
+    }
+    textarea{min-height:74px; resize:vertical}
+    .small{font-size:12.5px;color:var(--muted); line-height:1.25}
 
-h1{margin:0;font-size:18px}
-h2{margin:12px 0 8px;font-size:16px}
+    /* Books */
+    .book{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      padding:12px;
+      border-radius:14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.14);
+      margin-bottom: 10px;
+    }
+    .check{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px;
+      border-radius:12px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+    }
 
-section{padding:12px}
-
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:12px;
-  margin-bottom:12px;
-}
-
-.stat{font-size:14px;margin-bottom:6px}
-
-.day{
-  background:rgba(0,0,0,.2);
-  border-radius:14px;
-  padding:12px;
-  margin-bottom:12px;
-}
-
-.date{font-weight:700;margin-bottom:6px}
-
-.supps{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-  margin-bottom:8px;
-}
-
-label{
-  display:flex;
-  gap:6px;
-  align-items:center;
-  background:rgba(255,255,255,.1);
-  padding:8px;
-  border-radius:10px;
-  font-size:14px;
-}
-
-textarea,input{
-  width:100%;
-  border:none;
-  border-radius:10px;
-  padding:10px;
-  background:rgba(0,0,0,.25);
-  color:white;
-  font-size:14px;
-}
-
-textarea{min-height:70px}
-
-.book{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  margin-bottom:10px;
-}
-
-button{
-  width:100%;
-  background:#0b5f75;
-  color:white;
-  border:none;
-  padding:12px;
-  border-radius:12px;
-  font-size:15px;
-  cursor:pointer;
-}
-</style>
+    /* Error box */
+    .error{
+      background: rgba(255,0,0,.16);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 14px;
+      padding: 12px;
+      margin: 12px;
+      max-width: 980px;
+      margin-left:auto; margin-right:auto;
+    }
+  </style>
 </head>
 
 <body>
-
 <header>
   <h1>📅 Routine – Gesundheit & Bücher</h1>
-  <div style="font-size:13px;color:var(--muted)">
-    Jahreskalender · Auswertungen · Alles gespeichert
+  <div class="sub">
+    Jahreskalender (Monate aufklappbar) · Auswertungen Woche/Monat/Jahr · Alles gespeichert
+  </div>
+
+  <div class="tabs">
+    <button id="tabHealth" class="tab active" type="button">🧘 Gesundheit</button>
+    <button id="tabBooks" class="tab" type="button">📚 Bücher</button>
   </div>
 </header>
 
+<div id="errorBox" class="error hidden"></div>
+
 <section id="pdfArea">
 
-<div class="card">
-  <h2>📊 Auswertungen</h2>
-  <div id="stats"></div>
-</div>
+  <div class="card">
+    <h2>📊 Auswertungen</h2>
+    <div id="stats" class="statsGrid"></div>
+  </div>
 
-<div class="card">
-  <h2>🧘 Gesundheit – Jahreskalender</h2>
-  <div id="calendar"></div>
-</div>
+  <div id="healthView" class="card">
+    <h2>🧘 Gesundheit – Kalender</h2>
+    <div class="small">Tippe auf einen Monat, um ihn zu öffnen. (Schnell & stabil auf Handy)</div>
+    <div style="height:10px"></div>
+    <div id="calendar"></div>
+  </div>
 
-<div class="card">
-  <h2>📚 Bücherroutine</h2>
-  <div id="books"></div>
-  <button onclick="addBook()">➕ Buch hinzufügen</button>
-  <div id="history" style="margin-top:10px;font-size:13px"></div>
-</div>
+  <div id="booksView" class="card hidden">
+    <h2>📚 Bücherroutine</h2>
 
-</section>
+    <div class="btnRow" style="margin-bottom:10px">
+      <button id="addBookBtn" type="button">➕ Buch hinzufügen</button>
+      <button id="exportBtn" type="button">📄 PDF exportieren</button>
+    </div>
 
-<section>
-  <button onclick="exportPDF()">📄 PDF exportieren</button>
+    <div id="books"></div>
+
+    <div class="card" style="margin:12px 0 0; background:rgba(0,0,0,.12)">
+      <h2 style="margin-bottom:8px">✅ Historie (fertige Bücher)</h2>
+      <div id="history" class="small"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="btnRow">
+      <button id="exportBtn2" type="button">📄 PDF exportieren</button>
+      <button id="resetBtn" type="button">Reset (nur dieses Gerät)</button>
+    </div>
+    <div class="small" style="margin-top:10px">
+      Hinweis: Speicherung ist <b>pro Gerät/Browser</b> (LocalStorage). Auf einem anderen Handy ist es leer – außer du nutzt später Cloud-Sync.
+    </div>
+  </div>
+
 </section>
 
 <script>
-const SUPPS=["Omega 3","Vitamin D3","K2","Multivitamin","Magnesium","Olivenöl","Schwarzkümmelöl","Propolis"];
-const LS="routine_final_v1";
+(() => {
+  const SUPPS = ["Omega 3","Vitamin D3","K2","Multivitamin","Magnesium","Olivenöl","Schwarzkümmelöl","Propolis"];
+  const KEY = "routine_program_v3"; // neuer stabiler Key
 
-function load(){return JSON.parse(localStorage.getItem(LS)||"{}")}
-function save(d){localStorage.setItem(LS,JSON.stringify(d))}
+  // ältere Keys (Migration – damit dir nicht wieder alles weg ist)
+  const OLD_KEYS = ["routine_final_v1", "ultraRoutine", "yearRoutine", "routine_calendar_v2", "routine_calendar_v1", "yearRoutine", "ultraRoutine"];
 
-function init(){
-  let d=load();
-  if(!d.days){
-    d.days=[];
-    const year=new Date().getFullYear();
-    const start=new Date(year,0,1);
-    const end=new Date(year,11,31);
-    for(let x=new Date(start);x<=end;x.setDate(x.getDate()+1)){
-      d.days.push({
-        date:x.toISOString().slice(0,10),
-        supps:Object.fromEntries(SUPPS.map(s=>[s,false])),
-        note:""
+  const el = (id) => document.getElementById(id);
+  const errorBox = el("errorBox");
+
+  function showError(msg){
+    errorBox.classList.remove("hidden");
+    errorBox.innerHTML = "<b>Fehler:</b> " + escapeHtml(msg) +
+      "<br><span class='small'>Tipp: Wenn du iPhone nutzt, öffne „Einstellungen → Safari → Erweitert → Web-Inspector“ (oder am PC DevTools) und schau in die Konsole.</span>";
+  }
+
+  // Safe localStorage
+  function safeGet(key){
+    try { return localStorage.getItem(key); } catch(e){ return null; }
+  }
+  function safeSet(key, val){
+    try { localStorage.setItem(key, val); return true; } catch(e){ showError("LocalStorage ist blockiert. Bitte Private Mode deaktivieren oder Speicher erlauben."); return false; }
+  }
+  function safeRemove(key){
+    try { localStorage.removeItem(key); } catch(e){}
+  }
+
+  function load(){
+    const raw = safeGet(KEY);
+    if(!raw) return null;
+    try { return JSON.parse(raw); } catch(e){ return null; }
+  }
+  function save(data){
+    safeSet(KEY, JSON.stringify(data));
+  }
+
+  function iso(d){
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,"0");
+    const da=String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${da}`;
+  }
+  function parseISO(s){
+    const [y,m,d] = s.split("-").map(Number);
+    return new Date(y, m-1, d);
+  }
+  function deDate(d){ return d.toLocaleDateString("de-DE"); }
+  function dow(d){ return d.toLocaleDateString("de-DE",{weekday:"long"}); }
+
+  function getKW(date){
+    // ISO week
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  }
+
+  function escapeHtml(str){
+    return (str ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // Migration: versucht ältere Daten zu übernehmen
+  function migrateIfPossible(){
+    const existing = load();
+    if(existing) return existing;
+
+    // such nach altem Key, nimm den ersten brauchbaren
+    for(const k of OLD_KEYS){
+      const raw = safeGet(k);
+      if(!raw) continue;
+      try{
+        const old = JSON.parse(raw);
+        // versuche zu normalisieren
+        const normalized = normalize(old);
+        if(normalized){
+          save(normalized);
+          return normalized;
+        }
+      }catch(e){}
+    }
+    return null;
+  }
+
+  function normalize(old){
+    // Erwartet Ziel:
+    // { year, days:[{date, supps:{}, note}], books:[{title,min,done,finished}] }
+    const year = new Date().getFullYear();
+    const base = makeFresh(year);
+
+    // Wenn altes Format days schon hat:
+    if(old && Array.isArray(old.days)){
+      // Map by date
+      const map = new Map();
+      for(const d of old.days){
+        if(!d || !d.date) continue;
+        const date = d.date;
+        const supps = {};
+        SUPPS.forEach(s => supps[s] = !!(d.supps && d.supps[s]));
+        map.set(date, {date, supps, note: (d.note ?? "")});
+      }
+      base.days = base.days.map(day => map.get(day.date) || day);
+    }
+
+    // Bücher
+    if(old && Array.isArray(old.books)){
+      base.books = old.books.map(b => ({
+        title: (b.title ?? ""),
+        min: Number(b.min ?? b.minutes ?? 0),
+        done: !!(b.done),
+        finished: b.finished ?? b.finishedAtISO ?? null
+      }));
+    }
+
+    return base;
+  }
+
+  function makeFresh(year){
+    const start = new Date(year,0,1);
+    const end = new Date(year,11,31);
+    const days = [];
+    for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
+      const supps = {};
+      SUPPS.forEach(s => supps[s] = false);
+      days.push({ date: iso(d), supps, note: "" });
+    }
+    return { year, days, books: [] };
+  }
+
+  function ensureData(){
+    let data = migrateIfPossible();
+    if(data) return data;
+
+    const year = new Date().getFullYear();
+    data = makeFresh(year);
+    save(data);
+    return data;
+  }
+
+  // ==== Rendering (FAST): months accordion, render month body only when opened
+  const monthState = new Map(); // monthIndex => open?
+  const monthRendered = new Set(); // monthIndex rendered?
+
+  function groupByMonth(days){
+    const months = Array.from({length:12}, (_,i)=>({idx:i, days:[]}));
+    for(const day of days){
+      const dt = parseISO(day.date);
+      months[dt.getMonth()].days.push(day);
+    }
+    return months;
+  }
+
+  function renderApp(){
+    const data = ensureData();
+    renderStats(data);
+    renderCalendar(data);
+    renderBooks(data);
+  }
+
+  function renderStats(data){
+    const stats = el("stats");
+    stats.innerHTML = "";
+
+    const yearDays = data.days.length; // 365/366
+    const weeks = 52;
+    const months = 12;
+
+    // Supplements stats
+    for(const s of SUPPS){
+      const total = data.days.reduce((acc,d)=> acc + (d.supps?.[s] ? 1 : 0), 0);
+      const perWeek = (total / weeks).toFixed(2);
+      const perMonth = (total / months).toFixed(2);
+      stats.insertAdjacentHTML("beforeend", `
+        <div class="statLine">
+          <b>${escapeHtml(s)}</b><br>
+          <span class="muted">Jahr:</span> ${total} Tage ·
+          <span class="muted">Ø/Woche:</span> ${perWeek} ·
+          <span class="muted">Ø/Monat:</span> ${perMonth}
+        </div>
+      `);
+    }
+
+    // Books minutes stats (year-based averages)
+    const totalMin = (data.books || []).reduce((a,b)=> a + Number(b.min||0), 0);
+    const perWeekMin = (totalMin / weeks).toFixed(1);
+    const perMonthMin = (totalMin / months).toFixed(1);
+    stats.insertAdjacentHTML("beforeend", `
+      <div class="statLine">
+        <b>📚 Lesen</b><br>
+        <span class="muted">Jahr:</span> ${totalMin} Minuten ·
+        <span class="muted">Ø/Woche:</span> ${perWeekMin} ·
+        <span class="muted">Ø/Monat:</span> ${perMonthMin}
+      </div>
+    `);
+  }
+
+  function renderCalendar(data){
+    const cal = el("calendar");
+    cal.innerHTML = "";
+
+    const months = groupByMonth(data.days);
+    const now = new Date();
+    const currentMonth = now.getMonth();
+
+    months.forEach(m => {
+      // default open: current month
+      if(!monthState.has(m.idx)) monthState.set(m.idx, m.idx === currentMonth);
+
+      const monthName = new Date(data.year, m.idx, 1).toLocaleDateString("de-DE",{month:"long", year:"numeric"});
+      const open = monthState.get(m.idx);
+
+      const wrap = document.createElement("div");
+      wrap.className = "month";
+      wrap.innerHTML = `
+        <div class="monthHead" data-mid="${m.idx}">
+          <div>
+            <b>${escapeHtml(monthName)}</b><div class="hint">${m.days.length} Tage · tippen zum ${open ? "Schließen" : "Öffnen"}</div>
+          </div>
+          <div style="font-weight:900;font-size:18px;opacity:.9">${open ? "−" : "+"}</div>
+        </div>
+        <div class="monthBody ${open ? "" : "hidden"}" id="monthBody-${m.idx}"></div>
+      `;
+      cal.appendChild(wrap);
+
+      // Click handler
+      wrap.querySelector(".monthHead").addEventListener("click", () => {
+        const isOpen = monthState.get(m.idx);
+        monthState.set(m.idx, !isOpen);
+        renderCalendar(ensureData()); // cheap because bodies are lazy-rendered; month states preserved
+        // keep stats/books unchanged
+      });
+
+      // lazy render month body if open
+      if(open){
+        renderMonthBody(m.idx, m.days);
+      }
+    });
+  }
+
+  function renderMonthBody(monthIdx, days){
+    const body = el(`monthBody-${monthIdx}`);
+    if(!body) return;
+
+    // render fresh each time (still small: one month only)
+    body.innerHTML = "";
+
+    days.forEach(day => {
+      const dt = parseISO(day.date);
+      const kw = getKW(dt);
+      const dayHtml = `
+        <div class="day" data-date="${day.date}">
+          <div class="dateLine">
+            ${escapeHtml(dow(dt))}, ${escapeHtml(deDate(dt))} · KW ${kw} · ${dt.getFullYear()}
+          </div>
+
+          <div class="supps">
+            ${SUPPS.map(s => `
+              <label class="pill">
+                <input type="checkbox" data-supp="${escapeHtml(s)}" ${day.supps?.[s] ? "checked" : ""}>
+                <span>${escapeHtml(s)}</span>
+              </label>
+            `).join("")}
+          </div>
+
+          <textarea placeholder="Notizen / Freitext…" data-note>${escapeHtml(day.note || "")}</textarea>
+        </div>
+      `;
+      body.insertAdjacentHTML("beforeend", dayHtml);
+    });
+
+    // Bind events for this month only
+    body.querySelectorAll('.day').forEach(dayEl => {
+      const date = dayEl.getAttribute("data-date");
+
+      dayEl.querySelectorAll('input[type="checkbox"][data-supp]').forEach(cb => {
+        cb.addEventListener("change", () => {
+          const supp = cb.getAttribute("data-supp");
+          const data = ensureData();
+          const item = data.days.find(d => d.date === date);
+          if(item && item.supps){
+            item.supps[supp] = cb.checked;
+            save(data);
+            renderStats(data);
+          }
+        });
+      });
+
+      const ta = dayEl.querySelector('textarea[data-note]');
+      ta.addEventListener("input", () => {
+        const data = ensureData();
+        const item = data.days.find(d => d.date === date);
+        if(item){
+          item.note = ta.value;
+          save(data);
+        }
+      });
+    });
+  }
+
+  function renderBooks(data){
+    const booksEl = el("books");
+    const historyEl = el("history");
+    booksEl.innerHTML = "";
+
+    const books = data.books || [];
+    if(books.length === 0){
+      booksEl.innerHTML = `<div class="small">Noch keine Bücher. Tippe auf „Buch hinzufügen“.</div>`;
+    } else {
+      books.forEach((bk, idx) => {
+        const html = `
+          <div class="book" data-bidx="${idx}">
+            <input type="text" placeholder="Buchtitel" value="${escapeHtml(bk.title||"")}" data-field="title">
+            <input type="number" min="0" placeholder="Minuten (gesamt)" value="${escapeHtml(String(bk.min ?? 0))}" data-field="min">
+            <label class="check">
+              <input type="checkbox" ${bk.done ? "checked" : ""} data-field="done">
+              <span>Fertig</span>
+            </label>
+            <div class="small muted">${bk.done && bk.finished ? "Abgeschlossen am: " + escapeHtml(formatISODate(bk.finished)) : "Ziel: 30 Minuten Lesen (oder mehr)"}</div>
+          </div>
+        `;
+        booksEl.insertAdjacentHTML("beforeend", html);
+      });
+
+      // Bind
+      booksEl.querySelectorAll(".book").forEach(bookEl => {
+        const idx = Number(bookEl.getAttribute("data-bidx"));
+
+        bookEl.querySelectorAll("input[data-field]").forEach(inp => {
+          const field = inp.getAttribute("data-field");
+          inp.addEventListener(field === "done" ? "change" : "input", () => {
+            const data = ensureData();
+            const bk = data.books[idx];
+            if(!bk) return;
+
+            if(field === "title") bk.title = inp.value;
+            if(field === "min") bk.min = Number(inp.value || 0);
+            if(field === "done"){
+              const was = !!bk.done;
+              bk.done = inp.checked;
+              if(!was && bk.done){
+                bk.finished = bk.finished || iso(new Date());
+              }
+            }
+
+            save(data);
+            renderStats(data);
+            renderBooks(data);
+          });
+        });
       });
     }
-    d.books=[];
-    save(d);
+
+    // History
+    const doneBooks = (books || []).filter(b => b.done && (b.title||"").trim().length > 0);
+    if(doneBooks.length === 0){
+      historyEl.innerHTML = "Noch keine fertigen Bücher.";
+    } else {
+      const lines = doneBooks
+        .slice()
+        .sort((a,b)=> (a.finished||"").localeCompare(b.finished||""))
+        .map(b => `• <b>${escapeHtml(b.title)}</b> — ${Number(b.min||0)} Min${b.finished ? " · " + escapeHtml(formatISODate(b.finished)) : ""}`);
+      historyEl.innerHTML = lines.join("<br>");
+    }
   }
-  render();
-}
 
-function render(){
-  const d=load();
-  renderStats(d);
-  renderCalendar(d);
-  renderBooks(d);
-}
+  function formatISODate(isoStr){
+    try{
+      const d = parseISO(isoStr);
+      return d.toLocaleDateString("de-DE");
+    }catch(e){ return isoStr; }
+  }
 
-function renderCalendar(d){
-  const c=document.getElementById("calendar");
-  c.innerHTML="";
-  d.days.forEach(day=>{
-    const dt=new Date(day.date);
-    const div=document.createElement("div");
-    div.className="day";
-    div.innerHTML=`
-      <div class="date">
-        ${dt.toLocaleDateString("de-DE",{weekday:"long"})},
-        ${dt.toLocaleDateString()} · KW ${getKW(dt)} · ${dt.getFullYear()}
-      </div>
-      <div class="supps">
-        ${SUPPS.map(s=>`
-          <label>
-            <input type="checkbox" ${day.supps[s]?"checked":""}
-              onchange="toggleSupp('${day.date}','${s}',this.checked)">
-            ${s}
-          </label>`).join("")}
-      </div>
-      <textarea placeholder="Notizen"
-        oninput="saveNote('${day.date}',this.value)">${day.note}</textarea>
-    `;
-    c.appendChild(div);
-  });
-}
+  // Tabs
+  function setTab(which){
+    el("tabHealth").classList.toggle("active", which === "health");
+    el("tabBooks").classList.toggle("active", which === "books");
+    el("healthView").classList.toggle("hidden", which !== "health");
+    el("booksView").classList.toggle("hidden", which !== "books");
+  }
 
-function renderStats(d){
-  const s=document.getElementById("stats");
-  s.innerHTML="";
-  SUPPS.forEach(x=>{
-    const total=d.days.filter(dy=>dy.supps[x]).length;
-    s.innerHTML+=`
-      <div class="stat">
-        ${x}: Jahr ${total} · Ø/W ${(total/52).toFixed(1)} · Ø/M ${(total/12).toFixed(1)}
-      </div>`;
-  });
+  // Actions
+  function addBook(){
+    const data = ensureData();
+    data.books = data.books || [];
+    data.books.unshift({ title:"", min:0, done:false, finished:null });
+    save(data);
+    renderStats(data);
+    renderBooks(data);
+    setTab("books");
+  }
 
-  const totalMin=d.books.reduce((a,b)=>a+(b.min||0),0);
-  s.innerHTML+=`
-    <div class="stat">
-      📚 Lesen: ${totalMin} Min · Ø/W ${(totalMin/52).toFixed(1)} · Ø/M ${(totalMin/12).toFixed(1)}
-    </div>`;
-}
+  function exportPDF(){
+    // Wenn html2pdf nicht geladen (CDN blockiert), freundlich abbrechen
+    if(typeof html2pdf === "undefined"){
+      alert("PDF-Export konnte nicht geladen werden (CDN blockiert/offline). Seite funktioniert trotzdem. Bitte später mit Internet erneut versuchen.");
+      return;
+    }
+    html2pdf().from(el("pdfArea")).set({ filename: "Routine-Auswertung.pdf" }).save();
+  }
 
-function toggleSupp(date,s,val){
-  const d=load();
-  d.days.find(x=>x.date===date).supps[s]=val;
-  save(d);renderStats(d);
-}
-function saveNote(date,val){
-  const d=load();
-  d.days.find(x=>x.date===date).note=val;
-  save(d);
-}
+  function resetAll(){
+    if(!confirm("Willst du wirklich ALLE Daten auf diesem Gerät löschen?")) return;
+    safeRemove(KEY);
+    // optional: alte keys auch löschen, damit’s sauber bleibt
+    OLD_KEYS.forEach(k => safeRemove(k));
+    monthState.clear();
+    renderApp();
+  }
 
-function addBook(){
-  const d=load();
-  d.books.push({title:"",min:0,done:false,finished:null});
-  save(d);renderBooks(d);renderStats(d);
-}
+  // Wire UI
+  function wire(){
+    el("tabHealth").addEventListener("click", () => setTab("health"));
+    el("tabBooks").addEventListener("click", () => setTab("books"));
+    el("addBookBtn").addEventListener("click", addBook);
+    el("exportBtn").addEventListener("click", exportPDF);
+    el("exportBtn2").addEventListener("click", exportPDF);
+    el("resetBtn").addEventListener("click", resetAll);
+  }
 
-function renderBooks(d){
-  const b=document.getElementById("books");
-  b.innerHTML="";
-  d.books.forEach((bk,i)=>{
-    b.innerHTML+=`
-      <div class="book">
-        <input placeholder="Buchtitel" value="${bk.title}"
-          oninput="editBook(${i},'title',this.value)">
-        <input type="number" placeholder="Minuten" value="${bk.min}"
-          oninput="editBook(${i},'min',this.value)">
-        <label>
-          <input type="checkbox" ${bk.done?"checked":""}
-            onchange="finishBook(${i},this.checked)"> Fertig
-        </label>
-      </div>`;
-  });
-
-  document.getElementById("history").innerHTML=
-    "<b>Historie:</b><br>"+d.books.filter(x=>x.done)
-    .map(x=>`• ${x.title} (${x.min} Min)`).join("<br>");
-}
-
-function editBook(i,f,v){
-  const d=load();d.books[i][f]=f==="min"?Number(v):v;save(d);renderStats(d);
-}
-function finishBook(i,v){
-  const d=load();d.books[i].done=v;
-  if(v)d.books[i].finished=new Date().toISOString().slice(0,10);
-  save(d);renderBooks(d);renderStats(d);
-}
-
-function getKW(d){
-  d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
-  d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));
-  const y=new Date(Date.UTC(d.getUTCFullYear(),0,1));
-  return Math.ceil(((d-y)/86400000+1)/7);
-}
-
-function exportPDF(){
-  html2pdf().from(document.getElementById("pdfArea"))
-    .set({filename:"Routine_Jahr.pdf"}).save();
-}
-
-init();
+  // Boot
+  try{
+    wire();
+    ensureData();
+    renderApp();
+  }catch(e){
+    showError(e?.message || String(e));
+  }
+})();
 </script>
-
 </body>
 </html>
